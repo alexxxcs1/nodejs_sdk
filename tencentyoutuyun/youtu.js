@@ -1496,5 +1496,55 @@ exports.namecardocr = function(imagePath,　retImage, callback) {
     // send the request body
     request.end(request_body); 
 }
+exports.faceMerger = function(rsp_type,imagePath,model_id,callback) {
+
+    callback = callback || function(ret){console.log(ret)};
+
+    var expired = parseInt(Date.now() / 1000) + EXPIRED_SECONDS;
+    var sign  = auth.appSign(expired);
+    var request_body = '';
+    request_body = JSON.stringify({
+        app_id: conf.APPID,
+        rsp_img_type: rsp_type,
+        img_data: imagePath,
+        opdata: [{ //注意opdata是一个数组
+            "cmd": "doFaceMerge",
+            "params": {
+                "model_id": model_id ? model_id : "cf_fuwa_qiji" // 通用模板id
+            }
+        }]
+    });
+
+    var params = {
+        hostname: conf.API_YOUTU_SERVER,
+        path: '/cgi-bin/pitu_open_access_for_youtu.fcg',
+        method: 'POST',
+        headers: {
+            'Authorization': sign,
+            'User-Agent'   : conf.USER_AGENT(),
+            'Content-Length': request_body.length,
+            'Content-Type': 'text/json'
+        }
+    };
+    
+    //console.log(request_body);
+    //console.log(params);
+    var request = null;
+    if (conf.API_DOMAIN == 0)
+    {
+        request = getrequest(http, params, callback);
+    } 
+    else {
+        request = getrequest(https, params, callback);
+    }
+    
+    request.on('error', function(e) {
+        callback({'httpcode': 0, 'code': 0, 'message':e.message, 'data': {}});
+    });
+    
+    // send the request body
+    request.end(request_body);    
+    //console.log(request_body);
+}
 
 
